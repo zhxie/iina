@@ -20,6 +20,8 @@ class ThumbnailPeekView: NSView {
     self.layer?.shadowRadius = 2
     self.layer?.borderWidth = 1
     self.layer?.borderColor = CGColor(gray: 0.6, alpha: 0.5)
+    self.layer?.backgroundColor = .black
+    
     self.imageView.wantsLayer = true
     self.imageView.layer?.cornerRadius = 4
     self.imageView.layer?.masksToBounds = true

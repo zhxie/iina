@@ -890,7 +890,7 @@ class MainWindowController: PlayerWindowController {
       timePreviewWhenSeek.isHidden = true
       let mousePos = playSlider.convert(event.locationInWindow, from: nil)
       updateTimeLabel(mousePos.x, originalPos: event.locationInWindow)
-      thumbnailPeekView.isHidden = true
+//      thumbnailPeekView.isHidden = true
     }
   }
 
@@ -1868,11 +1868,27 @@ class MainWindowController: PlayerWindowController {
       if player.info.thumbnailsReady, let tb = player.info.getThumbnail(forSecond: previewTime.second) {
         thumbnailPeekView.isHidden = false
         thumbnailPeekView.imageView.image = tb.image
-        let height = round(120 / thumbnailPeekView.imageView.image!.size.aspect)
-        let yPos = (oscPosition == .top || (oscPosition == .floating && sliderFrameInWindow.y + 52 + height >= window!.frame.height)) ?
-          sliderFrameInWindow.y - height : sliderFrameInWindow.y + 32
-        thumbnailPeekView.frame.size = NSSize(width: 120, height: height)
-        thumbnailPeekView.frame.origin = NSPoint(x: round(originalPos.x - thumbnailPeekView.frame.width / 2), y: yPos)
+        let width: CGFloat = 120
+        let height = round(width / thumbnailPeekView.imageView.image!.size.aspect)
+
+        let rotation = Double((360 - player.mpv.getInt(MPVProperty.videoParamsRotate)) % 360) // Convert to counterclockwise, user specifed rotation is also applied by mpv
+        let rotationRadian = CGFloat(rotation / 180 * .pi)
+        
+        if let layer = thumbnailPeekView.imageView.layer {
+          layer.position = CGPoint(x: layer.frame.midX, y: layer.frame.midY)
+          layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+          layer.transform = CATransform3DMakeRotation(rotationRadian, 0, 0, 1)
+        }
+
+        let newWidth = round(abs(width * cos(rotationRadian)) + abs(height * sin(rotationRadian)))
+        let newHeight = round(abs(height * cos(rotationRadian)) + abs(width * sin(rotationRadian)))
+        thumbnailPeekView.setFrameSize(NSSize(width: newWidth, height: newHeight))
+        
+        let xPos = originalPos.x - newWidth / 2
+        let yPos = (self.oscPosition == .top || (oscPosition == .floating && sliderFrameInWindow.y + 52 + height >= window!.frame.height)) ?
+          sliderFrameInWindow.y - newHeight : sliderFrameInWindow.y + 32
+        thumbnailPeekView.setFrameOrigin(NSPoint(x: xPos, y: yPos))
+
       } else {
         thumbnailPeekView.isHidden = true
       }
