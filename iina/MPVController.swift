@@ -33,6 +33,9 @@ protocol MPVEventDelegate {
 }
 
 class MPVController: NSObject {
+
+  static let AsyncScreenshot: UInt64 = 1000000
+
   // The mpv_handle
   var mpv: OpaquePointer!
   var mpvRenderContext: OpaquePointer?
@@ -140,6 +143,9 @@ class MPVController: NSObject {
     setUserOption(PK.screenshotFolder, type: .other, forName: MPVOption.Screenshot.screenshotDirectory) { key in
       let screenshotPath = Preference.string(for: key)!
       return NSString(string: screenshotPath).expandingTildeInPath
+    }
+    if !Preference.bool(for: .screenshotSaveToFile) {
+      chkErr(mpv_set_option_string(mpv, MPVOption.Screenshot.screenshotDirectory, Utility.screenshotCachePath))
     }
 
     setUserOption(PK.screenshotFormat, type: .other, forName: MPVOption.Screenshot.screenshotFormat) { key in
@@ -384,19 +390,22 @@ class MPVController: NSObject {
   }
 
   // MARK: - Command & property
-
-  // Send arbitrary mpv command.
-  func command(_ command: MPVCommand, args: [String?] = [], checkError: Bool = true, returnValueCallback: ((Int32) -> Void)? = nil) {
-    guard mpv != nil else { return }
+  
+  private func makeCArgs(_ command: MPVCommand, _ args: [String?]) -> [String?] {
     if args.count > 0 && args.last == nil {
       Logger.fatal("Command do not need a nil suffix")
     }
     var strArgs = args
     strArgs.insert(command.rawValue, at: 0)
     strArgs.append(nil)
-    var cargs = strArgs.map { $0.flatMap { UnsafePointer<CChar>(strdup($0)) } }
+    return strArgs
+  }
+
+  // Send arbitrary mpv command.
+  func command(_ command: MPVCommand, args: [String?] = [], checkError: Bool = true, returnValueCallback: ((Int32) -> Void)? = nil) {
+    guard mpv != nil else { return }
+    var cargs = makeCArgs(command, args).map { $0.flatMap { UnsafePointer<CChar>(strdup($0)) } }
     let returnValue = mpv_command(self.mpv, &cargs)
-    for ptr in cargs { free(UnsafeMutablePointer(mutating: ptr)) }
     if checkError {
       chkErr(returnValue)
     } else if let cb = returnValueCallback {
@@ -406,6 +415,15 @@ class MPVController: NSObject {
 
   func command(rawString: String) -> Int32 {
     return mpv_command_string(mpv, rawString)
+  }
+
+  func asyncCommand(_ command: MPVCommand, args: [String?] = [], checkError: Bool = true, replyUserdata: UInt64) {
+    guard mpv != nil else { return }
+    var cargs = makeCArgs(command, args).map { $0.flatMap { UnsafePointer<CChar>(strdup($0)) } }
+    let returnValue = mpv_command_async(self.mpv, replyUserdata, &cargs)
+    if checkError {
+      chkErr(returnValue)
+    }
   }
 
   // Set property
@@ -632,6 +650,12 @@ class MPVController: NSObject {
         }
       } else {
         player.info.shouldAutoLoadFiles = false
+      }
+      
+    case MPV_EVENT_COMMAND_REPLY:
+      let reply = event.pointee.reply_userdata
+      if reply == MPVController.AsyncScreenshot {
+        player.screenshotCallback()
       }
 
     default: break

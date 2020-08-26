@@ -42,6 +42,13 @@ class PrefGeneralViewController: PreferenceViewController, PreferenceWindowEmbed
     }
   }
 
+  @IBAction func saveToFileAction(_ sender: NSButton) {
+    let dir = sender.state == .off ? Utility.screenshotCachePath : Preference.string(for: .screenshotFolder)
+    for player in PlayerCore.playerCores {
+      mpv_set_option_string(player.mpv!.mpv!, MPVOption.Screenshot.screenshotDirectory, dir)
+    }
+  }
+
   @IBAction func rememberRecentChanged(_ sender: NSButton) {
     if sender.state == .off {
       NSDocumentController.shared.clearRecentDocuments(self)

@@ -522,32 +522,35 @@ class PlayerCore: NSObject {
 
   func screenshot() {
     guard let vid = info.vid, vid > 0 else { return }
-    let option = Preference.bool(for: .screenshotIncludeSubtitle) ? "subtitles" : "video"
     let saveToFile = Preference.bool(for: .screenshotSaveToFile)
     let saveToClipboard = Preference.bool(for: .screenshotCopyToClipboard)
-    var image: NSImage? = nil
-    var screenshotTaken = false
-    if saveToFile {
-      mpv.command(.screenshot, args: [option])
-      screenshotTaken = true
+    guard saveToFile || saveToClipboard else { return }
+
+    let option = Preference.bool(for: .screenshotIncludeSubtitle) ? "subtitles" : "video"
+
+    mpv.asyncCommand(.screenshot, args: [option], replyUserdata: MPVController.AsyncScreenshot)
+  }
+
+  func screenshotCallback() {
+    let saveToFile = Preference.bool(for: .screenshotSaveToFile)
+    let saveToClipboard = Preference.bool(for: .screenshotCopyToClipboard)
+    guard saveToFile || saveToClipboard else { return }
+    guard let imageURL = mpv.getString(MPVOption.Screenshot.screenshotDirectory) else { return }
+    guard let lastScreenshot = Utility.getLatestScreenshot(path: imageURL) else { return }
+    guard let image = NSImage(contentsOf: lastScreenshot) else { return }
+    if saveToClipboard {
+      NSPasteboard.general.clearContents()
+      NSPasteboard.general.writeObjects([image])
     }
-    if let screenshot = mpv.getScreenshot(option) {
-      image = screenshot
-      if saveToClipboard {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.writeObjects([screenshot])
-        screenshotTaken = true
-      }
-    }
-    if screenshotTaken {
-      if let image = image {
+    DispatchQueue.main.async {
+      if saveToFile {
         let osdView = ScreenshootOSDView()
         osdView.setImage(image,
                          size: image.size.shrink(toSize: NSSize(width: 300, height: 200)),
-                         fileURL: saveToFile ? Utility.getLatestScreenshot() : nil)
-        sendOSD(.screenshot, forcedTimeout: 5, accessoryView: osdView.view, context: osdView)
+                         fileURL: lastScreenshot)
+        self.sendOSD(.screenshot, forcedTimeout: 5, accessoryView: osdView.view, context: osdView)
       } else {
-        sendOSD(.screenshot)
+        self.sendOSD(.screenshot)
       }
     }
   }
