@@ -275,6 +275,9 @@
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                                 <menuItem title="Toggle Picture-in-Picture" tag="4" id="3Pm-nn-HpB"/>
+                                <menuItem title="Toggle fast forward" tag="5" id="112-oO-jOn">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
                                 <menuItem title="None" id="unj-zt-RyU"/>
                             </items>
                         </menu>

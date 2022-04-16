@@ -292,6 +292,12 @@ class PlayerWindowController: NSWindowController, NSWindowDelegate {
     switch action {
     case .pause:
       player.togglePause()
+    case .toggleFastForward:
+      if player.info.playSpeed == 1 {
+        player.setSpeed(2.5)
+      } else {
+        player.setSpeed(1)
+      }
     default:
       break
     }

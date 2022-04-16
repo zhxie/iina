@@ -135,3 +135,6 @@
 
 /* Class = "NSMenuItem"; title = "Toggle Picture-in-Picture"; ObjectID = "3Pm-nn-HpB"; */
 "3Pm-nn-HpB.title" = "切换“画中画”模式";
+
+/* Class = "NSMenuItem"; title = "Toggle fast forward"; ObjectID = "112-oO-jOn"; */
+"112-oO-jOn.title" = "切换快进";

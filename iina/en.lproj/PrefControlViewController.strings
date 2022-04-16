@@ -135,3 +135,6 @@
 
 /* Class = "NSMenuItem"; title = "Toggle Picture-in-Picture"; ObjectID = "3Pm-nn-HpB"; */
 "3Pm-nn-HpB.title" = "Toggle Picture-in-Picture";
+
+/* Class = "NSMenuItem"; title = "Toggle fast forward"; ObjectID = "112-oO-jOn"; */
+"112-oO-jOn.title" = "Toggle fast forward";

@@ -363,6 +363,7 @@ struct Preference {
     case pause
     case hideOSC
     case togglePIP
+    case toggleFastForward
 
     static var defaultValue = MouseClickAction.none
 
