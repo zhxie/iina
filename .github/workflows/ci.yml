@@ -17,4 +17,16 @@ jobs:
         run: ./other/download_libs.sh
 
       - name: Build
-        run: xcodebuild -project iina.xcodeproj -scheme iina CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild -project iina.xcodeproj -scheme iina -config Release -archivePath ./archive archive
+
+      - name: Create tar
+        run: |
+          rm -rf ./IINA.app
+          mv ./archive.xcarchive/Products/Applications/IINA.app .
+          otool -L ./IINA.app/Contents/MacOS/IINA
+          tar Jcvf iina.tar.xz ./IINA.app
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: IINA-x86_64
+          path: ./iina.tar.xz
